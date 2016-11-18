@@ -29,3 +29,7 @@ Below few useful commands:
 [Mesos-DNS](https://mesosphere.github.io/mesos-dns/docs/) is built and deployed with Marathon during box provision. 
 Created `mesos-dns` app is constrained to run on node1, so that it's able to find mesos-dns binaries. 
 See also [Mesos DNS REST API doc](https://mesosphere.github.io/mesos-dns/docs/http.html).
+
+# Chronos
+Similarly to Mesos-DNS, Marathon manages [Chronos](https://mesos.github.io/chronos/). 
+See Chronos UI at [http://192.168.33.10:4400/](http://192.168.33.10:4400/). 

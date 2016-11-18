@@ -7,6 +7,10 @@ Vagrant.configure("2") do |config|
   config.vm.network "private_network", ip: "192.168.33.10"
   config.vm.hostname = "node1"
 
+  config.vm.provider :virtualbox do |v|
+    v.memory = 4096
+    v.cpus = 4
+  end
 
   config.vm.provision "shell", inline: <<-SCRIPT
     # delete localhost mapping
@@ -14,7 +18,7 @@ Vagrant.configure("2") do |config|
     # add mapping, if doesn't exist already
     grep "192.168.33.10 node1" /etc/hosts
     if [ ! $? -eq 0 ]; then
-        echo "192.168.33.10 node1" >> /etc/hosts
+      echo "192.168.33.10 node1" >> /etc/hosts
     fi
   SCRIPT
 
@@ -63,8 +67,16 @@ Vagrant.configure("2") do |config|
     # start mesos-dns with Marathon
     curl -X POST -H "Content-Type: application/json; charset=utf-8" http://0.0.0.0:8080/v2/apps -d @/vagrant/mesos-dns/marathon-create-app-request.json
 
-    echo "nameserver 192.168.33.10" >> /etc/resolv.conf
+    grep "nameserver 192.168.33.10" /etc/resolv.conf
+    if [ ! $? -eq 0 ]; then
+      echo "nameserver 192.168.33.10" >> /etc/resolv.conf
+    fi
+  SCRIPT
 
+  # install and start Chronos
+  config.vm.provision "shell", inline: <<-SCRIPT
+    rpm -qa | grep -qw chronos || yum --assumeyes install chronos
+    curl -X POST -H "Content-Type: application/json; charset=utf-8" http://0.0.0.0:8080/v2/apps -d @/vagrant/chronos/marathon-create-app-request.json
   SCRIPT
 
 end
