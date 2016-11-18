@@ -1,56 +1,93 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+$nodes = [
+    {name: 'node1', ip: '192.168.33.10', role: 'master', cores: 1, memory: 2048},
+    {name: 'node2', ip: '192.168.33.11', role: 'slave', cores: 1, memory: 1024},
+    {name: 'node3', ip: '192.168.33.12', role: 'slave', cores: 1, memory: 1024},
+    {name: 'node4', ip: '192.168.33.13', role: 'slave', cores: 1, memory: 1024}
+]
+
 Vagrant.configure("2") do |config|
-  config.vm.box = "bento/centos-7.1"
-
-  config.vm.network "private_network", ip: "192.168.33.10"
-  config.vm.hostname = "node1"
-
-  config.vm.provider :virtualbox do |v|
-    v.memory = 4096
-    v.cpus = 4
+  $nodes.each do |node_spec|
+    create_node(config, node_spec)
   end
+end
 
-  config.vm.provision "shell", inline: <<-SCRIPT
-    # delete localhost mapping
-    sudo sed -i '/127.0.0.1\s*node1/d' /etc/hosts
-    # add mapping, if doesn't exist already
-    grep "192.168.33.10 node1" /etc/hosts
-    if [ ! $? -eq 0 ]; then
-      echo "192.168.33.10 node1" >> /etc/hosts
-    fi
-  SCRIPT
+def create_node(config, node_spec)
+  name = node_spec[:name]
+  role = node_spec[:role]
+  ip = node_spec[:ip]
+  cores = node_spec[:cores]
+  memory = node_spec[:memory]
 
-  # install Apache Mesos and Marathon
-  config.vm.provision "shell", inline: <<-SCRIPT
+  config.vm.define name do |node|
+    node.vm.box = "bento/centos-7.1"
+    node.vm.network :private_network, :ip => ip
+    node.vm.hostname = name
+
+    node.vm.provider :virtualbox do |vb|
+      vb.memory = memory
+      vb.cpus = cores
+    end
+
+    case role
+      when 'master'
+        setup_master(node, node_spec)
+      when 'slave'
+        setup_slave(node, node_spec)
+      else
+        raise "Unknown role #{role}"
+    end
+
+    update_hosts_file(node, $nodes)
+    # delete localhost mappings for cluster nodes
+    node.vm.provision :shell, inline: <<-SCRIPT
+      sed -i '/127.0.0.1\s*node/d' /etc/hosts
+    SCRIPT
+
+  end
+end
+
+def setup_master(config, node_spec)
+  config.vm.provision :shell, inline: $install_mesos
+  config.vm.provision :shell, inline: $install_marathon
+  config.vm.provision :shell, inline: $install_and_start_zookeeper
+  config.vm.provision :shell, inline: "service mesos-master start"
+  config.vm.provision :shell, inline: "service marathon start"
+  config.vm.provision :shell, inline: $install_mesos_dns
+  config.vm.provision :shell, inline: $install_chronos
+end
+
+def setup_slave(config, node_spec)
+  config.vm.provision :shell, inline: $install_mesos
+  config.vm.provision :shell, inline: "service mesos-slave start"
+end
+
+$install_mesos = <<-SCRIPT
     rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
     rpm -qa | grep -qw mesos || yum --assumeyes install mesos
-    rpm -qa | grep -qw marathon || yum --assumeyes install marathon
-  SCRIPT
+SCRIPT
 
-  # install ans start Zookeeper
-  config.vm.provision "shell", inline: <<-SCRIPT
+$install_marathon = <<-SCRIPT
+    rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
+    rpm -qa | grep -qw marathon || yum --assumeyes install marathon
+SCRIPT
+
+$install_and_start_zookeeper = <<-SCRIPT
     rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm
     rpm -qa | grep -qw zookeeper || yum --assumeyes install zookeeper
     rpm -qa | grep -qw zookeeper-server || yum --assumeyes install zookeeper-server
     sudo -u zookeeper zookeeper-server-initialize --myid=1
     sudo service zookeeper-server start
-  SCRIPT
+SCRIPT
 
-  # start Mesos master and salve
-  config.vm.provision "shell", inline: <<-SCRIPT
-    service mesos-master start
-    service mesos-slave start
-  SCRIPT
+$install_chronos = <<-SCRIPT
+    rpm -qa | grep -qw chronos || yum --assumeyes install chronos
+    curl -X POST -H "Content-Type: application/json; charset=utf-8" http://0.0.0.0:8080/v2/apps -d @/vagrant/chronos/marathon-create-app-request.json
+SCRIPT
 
-  # start Marathon
-  config.vm.provision "shell", inline: <<-SCRIPT
-    service marathon start
-  SCRIPT
-
-  # build mesos-dns
-  config.vm.provision "shell", inline: <<-SCRIPT
+$install_mesos_dns = <<-SCRIPT
     rpm -qa | grep -qw golang || yum --assumeyes install golang
     rpm -qa | grep -qw git || yum --assumeyes install git
     rpm -qa | grep -qw bind-utils || yum --assumeyes install bind-utils
@@ -71,12 +108,18 @@ Vagrant.configure("2") do |config|
     if [ ! $? -eq 0 ]; then
       echo "nameserver 192.168.33.10" >> /etc/resolv.conf
     fi
-  SCRIPT
+SCRIPT
 
-  # install and start Chronos
-  config.vm.provision "shell", inline: <<-SCRIPT
-    rpm -qa | grep -qw chronos || yum --assumeyes install chronos
-    curl -X POST -H "Content-Type: application/json; charset=utf-8" http://0.0.0.0:8080/v2/apps -d @/vagrant/chronos/marathon-create-app-request.json
-  SCRIPT
-
+def update_hosts_file(config, nodes)
+  nodes.each do |node_spec|
+    name = node_spec[:name]
+    ip = node_spec[:ip]
+    config.vm.provision :shell, inline: <<-SCRIPT
+      # add mapping, if doesn't exist already
+      grep "#{ip} #{name}" /etc/hosts
+      if [ ! $? -eq 0 ]; then
+        echo "#{ip} #{name}" >> /etc/hosts
+      fi
+    SCRIPT
+  end
 end

@@ -4,6 +4,11 @@ for more details.
 # Vagrant
 Use version `1.8.6+` due to [Vagrant authentication failure in v1.8.5](https://github.com/mitchellh/vagrant/issues/7610).
 
+# VirtualBox
+As of v1.8.7, the Vagrant VirtualBox provider doesn't support parallel execution (see [docs for more details](https://www.vagrantup.com/docs/virtualbox/usage.html)).
+In order to speed things up, the `parallel_provision.sh` script sequentially creates VMs, but runs provision in parallel. 
+See creators [blog post](https://dzone.com/articles/parallel-provisioning-speeding) for more information, but be careful, it makes errors less visible.
+
 # Mesos UI
 Map `node1` to VM IP address in your `/etc/hosts`, if you get connection issues when visiting [Mesos UI](http://192.168.33.10:5050/#/).
 
