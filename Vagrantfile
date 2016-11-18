@@ -18,19 +18,27 @@ Vagrant.configure("2") do |config|
     fi
   SCRIPT
 
+  # install Apache Mesos and Marathon
   config.vm.provision "shell", inline: <<-SCRIPT
     rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
     rpm -qa | grep -qw mesos || yum --assumeyes install mesos
     rpm -qa | grep -qw marathon || yum --assumeyes install marathon
   SCRIPT
 
-
+  # install ans start Zookeeper
   config.vm.provision "shell", inline: <<-SCRIPT
     rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm
     rpm -qa | grep -qw zookeeper || yum --assumeyes install zookeeper
     rpm -qa | grep -qw zookeeper-server || yum --assumeyes install zookeeper-server
     sudo -u zookeeper zookeeper-server-initialize --myid=1
     sudo service zookeeper-server start
+  SCRIPT
+
+  # start Mesos master and salve
+  config.vm.provision "shell", inline: <<-SCRIPT
+    service mesos-master start
+    service mesos-slave start
+    netstat -nlp | grep mesos
   SCRIPT
 
 end
