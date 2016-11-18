@@ -41,4 +41,10 @@ Vagrant.configure("2") do |config|
     netstat -nlp | grep mesos
   SCRIPT
 
+  # start Marathon
+  config.vm.provision "shell", inline: <<-SCRIPT
+    service marathon start
+    ps aux | grep mesosphere.marathon.Main | awk '{print $2}' | head -n 1 | xargs -I{} sh -c 'netstat -nlp | grep {}/java'
+  SCRIPT
+
 end
