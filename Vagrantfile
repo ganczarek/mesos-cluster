@@ -38,13 +38,33 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SCRIPT
     service mesos-master start
     service mesos-slave start
-    netstat -nlp | grep mesos
   SCRIPT
 
   # start Marathon
   config.vm.provision "shell", inline: <<-SCRIPT
     service marathon start
-    ps aux | grep mesosphere.marathon.Main | awk '{print $2}' | head -n 1 | xargs -I{} sh -c 'netstat -nlp | grep {}/java'
+  SCRIPT
+
+  # build mesos-dns
+  config.vm.provision "shell", inline: <<-SCRIPT
+    rpm -qa | grep -qw golang || yum --assumeyes install golang
+    rpm -qa | grep -qw git || yum --assumeyes install git
+    rpm -qa | grep -qw bind-utils || yum --assumeyes install bind-utils
+
+    echo "Building mesos-dns. It will take a while..."
+    mkdir /home/vagrant/go
+    export GOPATH=/home/vagrant/go
+    export PATH=$PATH:$GOPATH/bin
+    go get github.com/tools/godep
+    go get github.com/mesosphere/mesos-dns
+    cd $GOPATH/src/github.com/mesosphere/mesos-dns
+    godep go build .
+
+    # start mesos-dns with Marathon
+    curl -X POST -H "Content-Type: application/json; charset=utf-8" http://0.0.0.0:8080/v2/apps -d @/vagrant/mesos-dns/marathon-create-app-request.json
+
+    echo "nameserver 192.168.33.10" >> /etc/resolv.conf
+
   SCRIPT
 
 end

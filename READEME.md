@@ -24,3 +24,8 @@ Below few useful commands:
 * Kill the app
 
       DELETE http://node1:8080/v2/apps/{app_name}
+      
+# Mesos-DNS
+[Mesos-DNS](https://mesosphere.github.io/mesos-dns/docs/) is built and deployed with Marathon during box provision. 
+Created `mesos-dns` app is constrained to run on node1, so that it's able to find mesos-dns binaries. 
+See also [Mesos DNS REST API doc](https://mesosphere.github.io/mesos-dns/docs/http.html).
