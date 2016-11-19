@@ -35,6 +35,18 @@ Below few useful commands:
 Created `mesos-dns` app is constrained to run on node1, so that it's able to find mesos-dns binaries. 
 See also [Mesos DNS REST API doc](https://mesosphere.github.io/mesos-dns/docs/http.html).
 
+Add IP address of server running Mesos-DNS to /etc/resolv.conf.
+
+      echo "nameserver 192.168.33.10" >> /etc/resolv.conf
+
+Afterwards, you can discover running Mesos tasks. For example, in order to get Mesos-DNS IP address execute
+
+      dig mesos-dns.marathon.mesos
+
+The hostname follows the pattern `task.framework.domain`. In the above example, `mesos-dns` is the application id
+managed by the `marathon` framework and the domain `mesos` comes from Mesos-DNS config file (`mesos-dns/config.json`).
+See [Service Naming documentation](https://mesosphere.github.io/mesos-dns/docs/naming.html) for more detail.
+
 # Chronos
 Similarly to Mesos-DNS, Marathon manages [Chronos](https://mesos.github.io/chronos/). 
 See Chronos UI at [http://192.168.33.10:4400/](http://192.168.33.10:4400/). 
