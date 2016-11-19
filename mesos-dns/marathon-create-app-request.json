@@ -1,7 +1,7 @@
 {
   "id": "mesos-dns",
   "cmd": "sudo /home/vagrant/go/src/github.com/mesosphere/mesos-dns/mesos-dns -v=1 -config=/vagrant/mesos-dns/config.json",
-  "cpus": 1.0,
+  "cpus": 0.5,
   "mem": 1024,
   "instances": 1,
   "constraints": [["hostname", "CLUSTER", "node1"]]

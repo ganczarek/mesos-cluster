@@ -2,10 +2,10 @@
 # vi: set ft=ruby :
 
 $nodes = [
-    {name: 'node1', ip: '192.168.33.10', role: 'master', cores: 1, memory: 2048},
-    {name: 'node2', ip: '192.168.33.11', role: 'slave', cores: 1, memory: 1024},
-    {name: 'node3', ip: '192.168.33.12', role: 'slave', cores: 1, memory: 1024},
-    {name: 'node4', ip: '192.168.33.13', role: 'slave', cores: 1, memory: 1024}
+    {name: 'node1', ip: '192.168.33.10', role: 'master', cores: 2, memory: 4096},
+    {name: 'node2', ip: '192.168.33.11', role: 'slave', cores: 1, memory: 2048},
+    {name: 'node3', ip: '192.168.33.12', role: 'slave', cores: 1, memory: 2048},
+    {name: 'node4', ip: '192.168.33.13', role: 'slave', cores: 1, memory: 2048}
 ]
 
 Vagrant.configure("2") do |config|
@@ -31,6 +31,10 @@ def create_node(config, node_spec)
       vb.cpus = cores
     end
 
+    update_hosts_file(node, $nodes)
+    # delete localhost mappings for cluster nodes
+    node.vm.provision :shell, inline: "sed -i '/127.0.0.1.*node.*/d' /etc/hosts"
+
     case role
       when 'master'
         setup_master(node, node_spec)
@@ -40,12 +44,6 @@ def create_node(config, node_spec)
         raise "Unknown role #{role}"
     end
 
-    update_hosts_file(node, $nodes)
-    # delete localhost mappings for cluster nodes
-    node.vm.provision :shell, inline: <<-SCRIPT
-      sed -i '/127.0.0.1\s*node/d' /etc/hosts
-    SCRIPT
-
   end
 end
 
@@ -53,15 +51,16 @@ def setup_master(config, node_spec)
   config.vm.provision :shell, inline: $install_mesos
   config.vm.provision :shell, inline: $install_marathon
   config.vm.provision :shell, inline: $install_and_start_zookeeper
-  config.vm.provision :shell, inline: "service mesos-master start"
-  config.vm.provision :shell, inline: "service marathon start"
+  config.vm.provision :shell, inline: "service mesos-master start && chkconfig mesos-master on"
+  config.vm.provision :shell, inline: "service marathon start && chkconfig marathon on"
   config.vm.provision :shell, inline: $install_mesos_dns
   config.vm.provision :shell, inline: $install_chronos
 end
 
 def setup_slave(config, node_spec)
   config.vm.provision :shell, inline: $install_mesos
-  config.vm.provision :shell, inline: "service mesos-slave start"
+  config.vm.provision :shell, inline: 'echo "zk://192.168.33.10:2181/mesos" > /etc/mesos/zk'
+  config.vm.provision :shell, inline: "service mesos-slave start && chkconfig mesos-slave on"
 end
 
 $install_mesos = <<-SCRIPT

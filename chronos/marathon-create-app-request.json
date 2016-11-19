@@ -1,7 +1,7 @@
 {
   "id": "chronos",
   "cmd": "/usr/bin/chronos",
-  "cpus": 1.0,
+  "cpus": 0.5,
   "mem": 512,
   "instances": 1,
   "constraints": [["hostname", "CLUSTER", "node1"]]
