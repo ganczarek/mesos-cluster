@@ -34,6 +34,7 @@ def create_node(config, node_spec)
     update_hosts_file(node, $nodes)
     # delete localhost mappings for cluster nodes
     node.vm.provision :shell, inline: "sed -i '/127.0.0.1.*node.*/d' /etc/hosts"
+    node.vm.provision :shell, inline: "rpm -qa | grep -qw bind-utils || yum --assumeyes install bind-utils"
 
     case role
       when 'master'
@@ -43,6 +44,8 @@ def create_node(config, node_spec)
       else
         raise "Unknown role #{role}"
     end
+
+    node.vm.provision :shell, inline: $setup_mesos_dns
 
   end
 end
@@ -107,6 +110,11 @@ $install_mesos_dns = <<-SCRIPT
     if [ ! $? -eq 0 ]; then
       echo "nameserver 192.168.33.10" >> /etc/resolv.conf
     fi
+SCRIPT
+
+$setup_mesos_dns = <<-SCRIPT
+    sed -i '/nameserver.*/d' /etc/resolv.conf
+    echo "nameserver 192.168.33.10" >> /etc/resolv.conf
 SCRIPT
 
 def update_hosts_file(config, nodes)
