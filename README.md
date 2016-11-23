@@ -6,8 +6,13 @@ Use Vagrant version `1.8.6+` because of [Vagrant authentication failure in v1.8.
 
 # VirtualBox
 As of `1.8.7`, the Vagrant VirtualBox provider doesn't support parallel execution (see [docs for more details](https://www.vagrantup.com/docs/virtualbox/usage.html)).
-In order to speed things up, the `parallel_provision.sh` script provisions machines in parallel, but still creates them sequentially.
+In order to speed things up, the `parallel_provision.sh` script provisions machines in parallel, but first creates them sequentially.
 See creator's [blog post](https://dzone.com/articles/parallel-provisioning-speeding) for more information, but be careful, it makes errors less visible.
+
+# Ansible
+Vagrant uses Ansible playbooks to create cluster nodes. Ansible used on Vagrant host is used, so install it first
+
+    yaourt -S ansible
 
 # Mesos UI
 Mesos UI is at [http://192.168.33.10:5050/#/](http://192.168.33.10:5050/#/). If you have connection issues, map `node1` to VM IP address in your `/etc/hosts`.

@@ -31,21 +31,35 @@ def create_node(config, node_spec)
       vb.cpus = cores
     end
 
-    update_hosts_file(node, $nodes)
-    # delete localhost mappings for cluster nodes
-    node.vm.provision :shell, inline: "sed -i '/127.0.0.1.*node.*/d' /etc/hosts"
-    node.vm.provision :shell, inline: "rpm -qa | grep -qw bind-utils || yum --assumeyes install bind-utils"
-
-    case role
-      when 'master'
-        setup_master(node, node_spec)
-      when 'slave'
-        setup_slave(node, node_spec)
-      else
-        raise "Unknown role #{role}"
+    node.vm.provision "ansible" do |ansible|
+      ansible.playbook = "ansible/cluster.yml"
+      ansible.host_vars = {
+                                "node1" => $nodes[0],
+                                "node2" => $nodes[1],
+                                "node3" => $nodes[2],
+                                "node4" => $nodes[3],
+      }
+      ansible.groups = {
+        "nodes" => ["node1", "node2", "node3", "node4"],
+      }
+      ansible.limit = "all"
     end
 
-    node.vm.provision :shell, inline: $setup_mesos_dns
+    #update_hosts_file(node, $nodes)
+    # delete localhost mappings for cluster nodes
+    #node.vm.provision :shell, inline: "sed -i '/127.0.0.1.*node.*/d' /etc/hosts"
+    #node.vm.provision :shell, inline: "rpm -qa | grep -qw bind-utils || yum --assumeyes install bind-utils"
+
+    #case role
+    #  when 'master'
+    #    setup_master(node, node_spec)
+    #  when 'slave'
+    #    setup_slave(node, node_spec)
+    #  else
+    #    raise "Unknown role #{role}"
+    #end
+
+    #node.vm.provision :shell, inline: $setup_mesos_dns
 
   end
 end
@@ -105,11 +119,6 @@ $install_mesos_dns = <<-SCRIPT
 
     # start mesos-dns with Marathon
     curl -X POST -H "Content-Type: application/json; charset=utf-8" http://0.0.0.0:8080/v2/apps -d @/vagrant/mesos-dns/marathon-create-app-request.json
-
-    grep "nameserver 192.168.33.10" /etc/resolv.conf
-    if [ ! $? -eq 0 ]; then
-      echo "nameserver 192.168.33.10" >> /etc/resolv.conf
-    fi
 SCRIPT
 
 $setup_mesos_dns = <<-SCRIPT

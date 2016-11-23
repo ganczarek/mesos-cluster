@@ -1,0 +1,21 @@
+---
+- name: delete localhost mappings for cluster nodes
+  lineinfile: dest=/etc/hosts
+              regexp='^\s*127.0.0.1\s*node.+$'
+              state=absent
+
+- name: map cluster nodes to their names
+  template: src=hosts.j2 dest=/etc/hosts
+
+- name: install the latest version of bind-utils (contains dig and host commands)
+  yum: pkg=bind-utils state=latest
+
+- name: install mesosphere yum repo
+  yum: name=http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm state=present
+
+- name: install mesos and docker
+  yum: pkg=device-mapper-event-libs,mesos,docker state=latest
+
+
+#- name: configure dns
+#  template: src=./resolv.conf.j2 dest=/etc/resolv.conf

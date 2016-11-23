@@ -1,0 +1,41 @@
+---
+# Zookeeper
+- name: install zookeeper yum repo
+  yum: name=http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm state=present
+
+- name: install zookeeper
+  yum: pkg=zookeeper,zookeeper-server state=latest
+
+- name: configure zookeeper ID
+  become_user: zookeeper
+  shell: zookeeper-server-initialize --myid=1
+
+- name: start zookeeper
+  service: name=zookeeper-server state=started enabled=yes
+
+# Marathon and Mesos
+- name: install marathon and chronos
+  yum: pkg=mesos,marathon state=latest
+
+- name: configure containerizers
+  lineinfile: dest=/etc/mesos-slave/containerizers create=yes line="docker,mesos"
+
+- name: start mesos-master
+  service: name=mesos-master state=started enabled=yes
+
+- name: start marathon
+  service: name=marathon state=started enabled=yes
+
+- name: start chronos
+  service: name=chronos state=started enabled=yes
+
+- name: start docker
+  service: name=docker state=started enabled=yes
+
+# Mesos-DNS
+- name: install go, git, and dnsutil packages
+  yum: pkg=golang,git,bind-utils state=latest
+
+- name: build/configure mesos-dns
+  become_user: vagrant
+  shell: sh /vagrant/ansible/roles/mesos_master/files/install_mesos_dns.sh

@@ -1,0 +1,25 @@
+---
+# This playbook deploys the whole Mesos cluster
+
+- name: apply common configuration to all cluster nodes
+  hosts: all
+  remote_user: vagrant
+  become: yes
+  become_method: sudo
+
+  roles:
+    - common
+
+- name: configure master nodes
+  hosts: master
+  remote_user: root
+
+  roles:
+    - mesos_master
+
+- name: consigure slave nodes
+  hosts: slave
+  remote_user: root
+
+  roles:
+    - mesos_slave
