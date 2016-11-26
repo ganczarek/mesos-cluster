@@ -2,9 +2,13 @@
 - name: install mesosphere yum repo
   yum: name=http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm state=present
 
-- name: TODO
-  shell: 'echo "zk://192.168.33.10:2181/mesos" > /etc/mesos/zk'
+- name: set zookeeper master
+  replace: dest=/etc/mesos/zk regexp="localhost" replace="{{ hostvars['node1']['ip'] }}"
 
 - name: start mesos-slave
   service: name=mesos-slave state=started enabled=yes
 
+- name: Add Mesos-DNS to resolv.conf
+  lineinfile: dest=/etc/resolv.conf
+              line="nameserver {{ hostvars['node1']['ip'] }}"
+              state=present

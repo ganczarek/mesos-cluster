@@ -1,0 +1,19 @@
+---
+- name: install zookeeper yum repo
+  yum: name=http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm state=present
+
+- name: install zookeeper
+  yum: pkg=zookeeper,zookeeper-server state=latest
+
+# JDK is not installed with zookeeper
+- name: install JDK 8
+  yum: pkg=java-1.8.0-openjdk state=latest
+
+- name: configure zookeeper ID
+  become_user: zookeeper # needed so that versoin-2 dir is created with correct access permissions
+  shell: zookeeper-server-initialize --myid=1
+  args:
+    creates: /var/lib/zookeeper/version-2
+
+- name: start zookeeper
+  service: name=zookeeper-server state=started enabled=yes

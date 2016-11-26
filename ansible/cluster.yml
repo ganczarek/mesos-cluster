@@ -13,13 +13,17 @@
 - name: configure master nodes
   hosts: master
   remote_user: root
+  become: yes
 
   roles:
+    - zookeeper
     - mesos_master
+    - mesos_slave
 
 - name: consigure slave nodes
   hosts: slave
   remote_user: root
+  become: yes
 
   roles:
     - mesos_slave
