@@ -11,9 +11,6 @@
 - name: start marathon
   service: name=marathon state=started enabled=yes
 
-- name: start chronos
-  service: name=chronos state=started enabled=yes
-
 - name: start docker
   service: name=docker state=started enabled=yes
 
