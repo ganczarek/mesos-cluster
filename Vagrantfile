@@ -31,21 +31,24 @@ def create_node(config, node_spec)
       vb.cpus = cores
     end
 
-    node.vm.provision "ansible" do |ansible|
-      ansible.playbook = "ansible/cluster.yml"
-      ansible.host_vars = {
+    # Execute Ansible probisioner only when all machines were created
+    if node_spec == $nodes.last
+      node.vm.provision "ansible" do |ansible|
+        ansible.playbook = "ansible/cluster.yml"
+        ansible.host_vars = {
                                 "node1" => $nodes[0],
                                 "node2" => $nodes[1],
                                 "node3" => $nodes[2],
                                 "node4" => $nodes[3],
-      }
-      ansible.groups = {
-        "nodes" => ["node1", "node2", "node3", "node4"],
-        "master" => ["node1"],
-        "slave" => ["node2", "node3", "node4"],
-      }
-      # Disable default limit to connect to all the machines
-      ansible.limit = "all"
+        }
+        ansible.groups = {
+          "nodes" => ["node1", "node2", "node3", "node4"],
+          "master" => ["node1"],
+          "slave" => ["node2", "node3", "node4"],
+        }
+        # Disable default limit to connect to all the machines
+        ansible.limit = "all"
+      end
     end
 
   end
