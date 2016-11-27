@@ -7,8 +7,3 @@
 
 - name: start mesos-slave
   service: name=mesos-slave state=started enabled=yes
-
-- name: Add Mesos-DNS to resolv.conf
-  lineinfile: dest=/etc/resolv.conf
-              line="nameserver {{ hostvars['node1']['ip'] }}"
-              state=present

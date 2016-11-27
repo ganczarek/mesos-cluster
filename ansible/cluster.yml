@@ -1,6 +1,4 @@
 ---
-# This playbook deploys the whole Mesos cluster
-
 - name: apply common configuration to all cluster nodes
   hosts: all
   remote_user: vagrant

@@ -30,5 +30,5 @@
     method: POST
     body: "{{ lookup('file','marathon-create-chronos-app.json') }}"
     body_format: json
-    status_code: 200, 201, 409 # OK or Conflict (app already exists)
+    status_code: 200, 201, 409 # OK, Created or Conflict (app already exists)
     HEADER_Content-Type: "application/json; charset=utf-8"
