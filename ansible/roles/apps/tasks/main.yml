@@ -21,7 +21,7 @@
     body: "{{ lookup('file','marathon-create-mesos-dns-app.json') }}"
     body_format: json
     # not the best idea to treat 409 (Conflict) as Success, but task needs to be idempotent. Could be done better though.
-    status_code: 200, 409
+    status_code: 200, 201, 409
     HEADER_Content-Type: "application/json; charset=utf-8"
 
 - name: create chronos app in Marathon
@@ -30,5 +30,5 @@
     method: POST
     body: "{{ lookup('file','marathon-create-chronos-app.json') }}"
     body_format: json
-    status_code: 200, 409 # OK or Conflict (app already exists)
+    status_code: 200, 201, 409 # OK or Conflict (app already exists)
     HEADER_Content-Type: "application/json; charset=utf-8"
