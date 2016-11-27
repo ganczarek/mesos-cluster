@@ -25,7 +25,7 @@
     - name: switch to Mesos-DNS in resolv.conf
       shell: echo "nameserver {{ hostvars['node1']['ip'] }}" > /etc/resolv.conf
 
-- name: consigure slave nodes
+- name: configure slave nodes
   hosts: slave
   remote_user: root
   become: yes

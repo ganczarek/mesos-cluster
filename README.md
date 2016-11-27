@@ -1,13 +1,8 @@
-This repository contains scripts to setup Mesos cluster. Follow [Mesosphere Advance Course](https://open.mesosphere.com/advanced-course/)
-for more details. 
+This repository contains Ansible playbook to setup Mesos cluster. Follow [Mesosphere Advance Course](https://open.mesosphere.com/advanced-course/)
+for some of the details. 
 
 # Vagrant
 Use Vagrant version `1.8.6+` because of [Vagrant authentication failure in v1.8.5](https://github.com/mitchellh/vagrant/issues/7610).
-
-# VirtualBox
-As of `1.8.7`, the Vagrant VirtualBox provider doesn't support parallel execution (see [docs for more details](https://www.vagrantup.com/docs/virtualbox/usage.html)).
-In order to speed things up, the `parallel_provision.sh` script provisions machines in parallel, but first creates them sequentially.
-See creator's [blog post](https://dzone.com/articles/parallel-provisioning-speeding) for more information, but be careful, it makes errors less visible.
 
 # Ansible
 Vagrant uses Ansible playbooks to create cluster nodes. Ansible used on Vagrant host is used, so install it first
@@ -25,31 +20,31 @@ Below few useful commands:
 
 * Metrics of running apps
 
-      GET http://node1:8080/metrics
+        GET http://node1:8080/metrics
 
 * Installed apps info
  
-      GET http://node1:8080/v2/apps[/{app_name}]
+        GET http://node1:8080/v2/apps[/{app_name}]
 
 * Kill the app
 
-      DELETE http://node1:8080/v2/apps/{app_name}
+        DELETE http://node1:8080/v2/apps/{app_name}
       
 # Mesos-DNS
 [Mesos-DNS](https://mesosphere.github.io/mesos-dns/docs/) is built and deployed with Marathon, when master machine is provisioned.
 Created `mesos-dns` app is constrained to run on node1, so that it's able to find mesos-dns binaries. 
 See also [Mesos DNS REST API doc](https://mesosphere.github.io/mesos-dns/docs/http.html).
 
-Add IP address of server running Mesos-DNS to /etc/resolv.conf.
+Add IP address of server running Mesos-DNS to your host's /etc/resolv.conf.
 
       echo "nameserver 192.168.33.10" >> /etc/resolv.conf
 
-Afterwards, you can discover running Mesos tasks. For example, in order to get Mesos-DNS IP address execute
+Afterwards, you can discover running Mesos tasks. For example, in order to get 'mesos-dns' IP address execute
 
       dig mesos-dns.marathon.mesos
 
 The hostname follows the pattern `task.framework.domain`. In the above example, `mesos-dns` is the application id
-managed by the `marathon` framework and the domain `mesos` comes from Mesos-DNS config file (`mesos-dns/config.json`).
+managed by the `marathon` framework and the domain `mesos` comes from Mesos-DNS config file (`/home/vagrant/config.json`).
 See [Service Naming documentation](https://mesosphere.github.io/mesos-dns/docs/naming.html) for more detail.
 
 # Chronos
