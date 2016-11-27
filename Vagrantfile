@@ -38,8 +38,9 @@ def create_node(config, node_spec)
     end
 
     # Provision slaves, but only when all created
-    if node_spec == $nodes.last
-      run_ansible_provisioner(node, $nodes)
+    slaves = $nodes.select{|node| node[:role] == 'slave'}
+    if node_spec == slaves.last
+      run_ansible_provisioner(node, slaves)
     end
 
   end

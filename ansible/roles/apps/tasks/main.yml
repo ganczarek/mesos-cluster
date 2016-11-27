@@ -1,0 +1,34 @@
+---
+# Mesos-DNS
+- name: install go, git, and dnsutil packages
+  yum: pkg=golang,git,bind-utils state=latest
+
+- name: build/configure mesos-dns
+  become_user: vagrant
+  shell: sh /vagrant/ansible/roles/apps/files/install_mesos_dns.sh
+
+- name: map cluster nodes to their names
+  template: src=mesos-dns-config.json.j2 dest=/home/vagrant/config.json
+
+# Chronos
+- name: install chronos
+  yum: pkg=chronos state=latest
+
+- name: create mesos-dns app in Marathon
+  uri:
+    url: http://{{ ip }}:8080/v2/apps
+    method: POST
+    body: "{{ lookup('file','marathon-create-mesos-dns-app.json') }}"
+    body_format: json
+    # not the best idea to treat 409 (Conflict) as Success, but task needs to be idempotent. Could be done better though.
+    status_code: 200, 409
+    HEADER_Content-Type: "application/json; charset=utf-8"
+
+- name: create chronos app in Marathon
+  uri:
+    url: http://{{ ip }}:8080/v2/apps
+    method: POST
+    body: "{{ lookup('file','marathon-create-chronos-app.json') }}"
+    body_format: json
+    status_code: 200, 409 # OK or Conflict (app already exists)
+    HEADER_Content-Type: "application/json; charset=utf-8"
